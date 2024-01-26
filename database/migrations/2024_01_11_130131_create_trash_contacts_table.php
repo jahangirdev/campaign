@@ -27,6 +27,8 @@ return new class extends Migration
             $table->integer('opens')->default(0)->unsigned();
             $table->integer('clicks')->default(0)->unsigned();
             $table->integer('point')->default(0);
+            $table->string('validity')->nullable();
+            $table->text('reason')->nullable();
             $table->timestamps();
         });
     }

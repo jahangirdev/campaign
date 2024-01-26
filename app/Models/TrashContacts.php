@@ -9,6 +9,6 @@ class TrashContacts extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['first_name', 'last_name', 'email', 'phone', 'country', 'address', 'list_id', 'full_name', 'status', 'attemps', 'clicks', 'opens', 'last_sent', 'point'];
+    protected $fillable = ['first_name', 'last_name', 'email', 'phone', 'country', 'address', 'list_id', 'full_name', 'status', 'attemps', 'clicks', 'opens', 'last_sent', 'point', 'validity', 'reason'];
 
 }

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Templates;
 use App\Models\EmailSentTrackings;
+use App\Models\TrashContacts;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,7 +19,7 @@ class sendCampaignEmail implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $contact, $campaign, $batchId;
+    public $contact, $campaign, $batchId, $sentTrack;
     /**
      * Create a new job instance.
      */
@@ -27,6 +28,7 @@ class sendCampaignEmail implements ShouldQueue
         $this->contact = $contact;
         $this->campaign = $campaign;
         $this->batchId = $campaign->batch_id;
+        $this->sentTrack = EmailSentTrackings::where('campaign_id', $this->campaign->id)->where('batch_id', $this->batchId)->first();
     }
 
     /**
@@ -34,7 +36,17 @@ class sendCampaignEmail implements ShouldQueue
      */
     public function handle(): void
     {
-
+        $verify = $this->smtpVerify($this->contact->email);
+        if($this->contact->validity === null && $verify['type']  == 'invalid'){
+            $this->contact->validity = "invalid";
+            $this->contact->reason = $verify['message'];
+            TrashContacts::create($this->contact->toArray());
+                $this->contact->delete();
+                if($this->sentTrack){
+                    $this->sentTrack->invalid++;
+                }
+                return;
+        }
         $unsubscribeUrl = route('track.unsubscribe', ['caid' => $this->campaign->id, 'coid' => $this->contact->id, 'batch' => $this->batchId]);
 
 
@@ -55,18 +67,27 @@ class sendCampaignEmail implements ShouldQueue
                 ->html($updatedHTML);
         });
 
-        $sentTrack = EmailSentTrackings::where('campaign_id', $this->campaign->id)->where('batch_id', $this->batchId)->first();
-        if($sentTrack){
-            $sentTrack->total_sent++;
-            $sentTrack->save();
+        
+        if($this->sentTrack){
+            $this->sentTrack->total_sent++;
+            $this->sentTrack->save();
         }
         $this->contact->attemps++;
         $this->contact->point--;
+        $this->contact->validity = 'valid';
         $this->contact->last_sent = Carbon::now();
         $this->contact->save();
       
       	sleep(10);
 
+    }
+
+    public function failed(\Exception $exception)
+    {
+        if($this->sentTrack){
+            $this->sentTrack->failed++;
+            $this->sentTrack->save();
+        }
     }
 
     public function prepare_email_html($html){
@@ -109,6 +130,70 @@ class sendCampaignEmail implements ShouldQueue
         $updatedHtml = $dom->saveHTML();
 
         return $updatedHtml;
-  }
+    }
+
+    public function getMXRecords($domain) {
+        $mxRecords = [];
+        $dnsRecords = dns_get_record($domain, DNS_MX);
+
+        foreach ($dnsRecords as $record) {
+            $mxRecords[] = $record['target'];
+        }
+
+        return $mxRecords;
+    }
+
+    public function smtpVerify($toEmail, $fromEmail = 'contact@jahangirdev.com') {
+        // Extract the domain from the recipient email
+        $domain = explode('@', $toEmail)[1];
+
+        // Get the mail server's MX records
+        $mxRecords = $this->getMXRecords($domain);
+
+        if (empty($mxRecords)) {
+            return "Invalid: MX records not found for $domain";
+        }
+
+        $errorMessage = "Invalid: Unable to verify with any MX record for $domain";
+
+        // Iterate through MX records and try each one
+        foreach ($mxRecords as $mxRecord) {
+            // Open a connection to the current mail server
+            $smtpConnection = stream_socket_client("tcp://$mxRecord:25", $errno, $errstr, 30);
+
+            if (!$smtpConnection) {
+                $errorMessage .= "\nFailed to connect to $mxRecord: $errstr ($errno)";
+                continue; // Try the next MX record
+            }
+
+            // Read the welcome message from the server
+            fread($smtpConnection, 1024);
+
+            // Send HELO command
+            fwrite($smtpConnection, "HELO example.com\r\n");
+            fread($smtpConnection, 1024);
+
+            // Send MAIL FROM command
+            fwrite($smtpConnection, "MAIL FROM:<$fromEmail>\r\n");
+            fread($smtpConnection, 1024);
+
+            // Send RCPT TO command
+            fwrite($smtpConnection, "RCPT TO:<$toEmail>\r\n");
+            $response = fread($smtpConnection, 1024);
+
+            // Close the connection
+            fwrite($smtpConnection, "QUIT\r\n");
+            fclose($smtpConnection);
+
+            // Check the response and return result if valid
+            if (strpos($response, '250') !== false) {
+                return ['type' => 'valid'];
+            } else {
+                $errorMessage .= "\nAttempted $mxRecord: $response";
+            }
+        }
+
+        return ['type' => 'invalid', 'message' => $errorMessage];
+    }
 
 }

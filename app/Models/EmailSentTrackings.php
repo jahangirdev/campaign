@@ -10,7 +10,7 @@ class EmailSentTrackings extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['campaign_id', 'batch_id', 'total_sent'];
+    protected $fillable = ['campaign_id', 'batch_id', 'total_sent', 'invalid', 'failed'];
 
     public function trackings(){
         return $this->hasMany(Trackings::class,'batch_id','batch_id');
