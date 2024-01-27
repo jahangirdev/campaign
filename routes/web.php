@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('/contact', ContactController::class);
     Route::get('/contacts/trashed', [ContactController::class, 'trash_index'])->name('contact.trashed');
+    Route::delete('/contacts/trashed/{id}', [ContactController::class, 'trash_destroy'])->name('contact.trash.destroy');
     Route::post('/contacts/import', [ContactController::class,'import'])->name('contact.import');
     Route::post('contacts/csv-import', [ContactController::class,'csv_import'])->name('contact.csv.import');
     Route::get('/contacts/unsubscribe', [ContactController::class,'unsubscribe'])->name('contact.unsubscribe');

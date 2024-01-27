@@ -115,6 +115,13 @@ class ContactController extends Controller
         }
     }
 
+    public function trash_destroy(string $id)
+    {
+        if(TrashContacts::find($id)->delete()){
+            return redirect()->back()->with('notice', ['type' => 'warning', 'message'=> 'Contact deleted successfully!']);
+        }
+    }
+
     private function validateEmail($email){
         // Validate email format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

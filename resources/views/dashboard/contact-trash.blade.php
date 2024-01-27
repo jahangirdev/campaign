@@ -73,9 +73,7 @@
       <td>{{ucwords($contact->country)}}</td>
       <td><span class="{{$contact->status != 'subscribed' ? 'un' : '' }}subscribed">{{ucwords($contact->status)}}</span></td>
       <td>
-        <a class="btn btn-info" href="{{route('contact.show', $contact->id)}}">View</a>
-        <a class="btn btn-warning" href="{{route('contact.edit', $contact->id)}}">Edit</a>
-        <form id="delete-frm-{{ $key }}" action="{{route('contact.destroy', $contact->id)}}" method="post" style="display:none">
+        <form id="delete-frm-{{ $key }}" action="{{route('contact.trash.destroy', $contact->id)}}" method="post" style="display:none">
           @csrf
           @method('DELETE')
         </form>

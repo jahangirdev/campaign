@@ -20,7 +20,8 @@ class Kernel extends ConsoleKernel
         $schedule->call(function (){
             $contacts = Contacts::where('attemps', '>=', 3)->where('point', '<', 0)->get();
             foreach ($contacts as $contact) {
-                TrashContacts::create($contact->toArray());
+                $trashContact = TrashContacts::create($contact->toArray());
+                $trashContact->update(['reason' => 'Less activity']);
                 $contact->delete();
             }
         })->weekly();
