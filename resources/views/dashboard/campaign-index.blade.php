@@ -82,8 +82,8 @@
                   </div>
                   <div class="row mt-4">
                     <div class="col">
-                      {{$campaign->sentTrackings()->sum('total_sent')}}
-                      <small class="text-muted"><br>Sent</small>
+                      Sent: {{$campaign->sentTrackings()->sum('total_sent')}} | Invalid: {{$campaign->sentTrackings()->sum('invalid')}} | Failed: {{$campaign->sentTrackings()->sum('failed')}}
+                      <small class="text-muted"><br>Sent Trackings</small>
                     </div>
                     <div class="col">
                       {{$campaign->trackings()->sum('opens')}}

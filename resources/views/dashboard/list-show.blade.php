@@ -67,7 +67,7 @@
   <tbody>
     @foreach($contacts as $key => $contact)
     <tr>
-      <td>{{$key+1}}</td>
+      <td>{{($key+1)*$contacts->currentPage()}}</td>
       <td>{{$contact->full_name}}</td>
       <td>{{$contact->email}}</td>
       <td>{{$contact->phone}}</td>
