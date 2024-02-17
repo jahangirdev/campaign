@@ -9,7 +9,7 @@ use App\Models\Templates;
 class TemplateController extends Controller
 {
     public function index(){
-        $templates = Templates::where('status', 'publish')->paginate(9);
+        $templates = Templates::paginate(9);
         return view("dashboard.template-index", compact("templates"));
     }
 

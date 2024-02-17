@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contacts;
-use App\Models\TrashContacts;
 use App\Models\Lists;
 use Illuminate\Http\Request;
 use Validator;
@@ -17,11 +16,6 @@ class ContactController extends Controller
      public function index(){
 
      }
-    public function trash_index()
-    {
-        $contacts = TrashContacts::paginate(100);
-        return view("dashboard.contact-trash", compact("contacts"));
-    }
 
     /**
      * Show the form for creating a new resource.
@@ -111,13 +105,6 @@ class ContactController extends Controller
     public function destroy(string $id)
     {
         if(Contacts::find($id)->delete()){
-            return redirect()->back()->with('notice', ['type' => 'warning', 'message'=> 'Contact deleted successfully!']);
-        }
-    }
-
-    public function trash_destroy(string $id)
-    {
-        if(TrashContacts::find($id)->delete()){
             return redirect()->back()->with('notice', ['type' => 'warning', 'message'=> 'Contact deleted successfully!']);
         }
     }

@@ -12,7 +12,7 @@ class Campaigns extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'template','lists','type','schedule','subject','from_name', 'from_email','status', 'repeat', 'last_run', 'stop_at', 'total_runs', 'batch_id', 'run_at'];
+    protected $fillable = ['name', 'template','lists','schedule','subject','from_name', 'from_email','status', 'last_run', 'stop_at', 'total_runs', 'batch_id', 'run_at'];
 
     public function templates(){
         return $this->belongsTo(Templates::class, 'template');

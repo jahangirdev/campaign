@@ -6,7 +6,7 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1 class="m-0">Campaign Schedule</h1>
+          <h1 class="m-0">Create New Campaign</h1>
         </div><!-- /.col -->
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
@@ -39,7 +39,7 @@
       @endif
       <div class="card">
         <div class="card-header">
-          <h3>Create New Campaign</h3>
+          <h3>Schedule</h3>
         </div>
         <div class="card-body">
           <form id="scheduleForm" method="POST" action="{{route('campaign.store')}}">
@@ -51,13 +51,6 @@
               <input name="from_email" type="text" class="form-control" id="fromEmail" value="{{$details['from_email']}}">
               <input name="lists" type="text" class="form-control" id="contactList" value="{{json_encode($details['lists'])}}">
               <input name="template" type="number" class="form-control" id="template" value="{{$details['template']}}">
-            </div>
-            <div class="form-group mt-3">
-              <label for="campaignType">Campaign Run</label>
-              <select name="type" class="form-control" id="campaignType">
-                <option value="once">Once</option>
-                <option value="repeat">Repeat</option>
-              </select>
             </div>
             <div class="form-group mt-3">
               <label for="campaignRunAt">Run At</label>
@@ -109,16 +102,6 @@
     document.addEventListener("DOMContentLoaded", () => {
         const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const form = document.getElementById('scheduleForm');
-        form.type.addEventListener("change", () => {
-            if(form.type.value == "repeat"){
-                form.repeat.parentElement.style.display = "block";
-                form.stop_at.parentElement.style.display = "block";
-            }
-            else{
-                form.repeat.parentElement.style.display = "none";
-                form.stop_at.parentElement.style.display = "none";
-            }
-        });
 
         form.run_at.addEventListener("change", () => {
             if(form.run_at.value == "schedule"){
