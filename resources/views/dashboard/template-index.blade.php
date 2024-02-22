@@ -45,7 +45,7 @@
             <div class="card-body">
               <h5 class="text-center mb-4">{{$template->name}}
               @if($template->after_quiz == 1)
-                (After Quiz)
+                <span class="badge text-white bg-success font-weight-normal">After Quiz</span>
               @endif
               </h5>
               <div class="d-flex justify-content-between mt-4">

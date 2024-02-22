@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Bus\Batchable;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
 class sendCampaignEmail implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -35,58 +35,67 @@ class sendCampaignEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        $unsubscribeUrl = route('track.unsubscribe', ['caid' => $this->campaign->id, 'coid' => $this->contact->id, 'batch' => $this->batchId]);
+        try {
+            $unsubscribeUrl = route('track.unsubscribe', ['caid' => $this->campaign->id, 'coid' => $this->contact->id, 'batch' => $this->batchId]);
 
+            $html = Templates::find($this->campaign->template)->code;
 
-        $html = Templates::find($this->campaign->template)->code;
+            // Replace variables in the HTML
+            $html = str_replace('{{cart_url}}', $this->recommendedCartLink($this->contact->email), $html);
+            $html = str_replace('%7B%7Bcart_url%7D%7D', $this->recommendedCartLink($this->contact->email), $html);
 
-        //replace {{cart_url}} variable with cart link
+            // Prepare the HTML content
+            $updatedHTML = $this->prepare_email_html($html);
+            $updatedHTML = str_replace('{{subject}}', $this->campaign->subject, $updatedHTML);
+            $updatedHTML = str_replace('%7B%7Bsubject%7D%7D', $this->campaign->subject, $updatedHTML);
+            $updatedHTML = str_replace('{{name}}', ($this->contact->full_name ?? 'there'), $updatedHTML);
+            $updatedHTML = str_replace('%7B%7Bname%7D%7D', ($this->contact->full_name ?? 'there'), $updatedHTML);
+            $updatedHTML = str_replace('{{recommended_packs}}', $this->recommendedPacks($this->contact->email), $updatedHTML);
+            $updatedHTML = str_replace('%7B%7Brecommended_packs%7D%7D', $this->recommendedPacks($this->contact->email), $updatedHTML);
+            $updatedHTML = str_replace('{{recommended_comps}}', $this->recommendedComps($this->contact->email), $updatedHTML);
+            $updatedHTML = str_replace('%7B%7Brecommended_comps%7D%7D', $this->recommendedComps($this->contact->email), $updatedHTML);
+            $updatedHTML = str_replace('{{unsubscribe}}', $unsubscribeUrl, $updatedHTML);
+            $updatedHTML = str_replace('%7B%7Bunsubscribe%7D%7D', $unsubscribeUrl, $updatedHTML);
 
-        $html = str_replace('{{cart_url}}', $this->recommendedCartLink($this->contact->email), $html);
-        $html = str_replace('%7B%7Bcart_url%7D%7D', $this->recommendedCartLink($this->contact->email), $html);
+            // Send the email
+            Mail::send([], [], function ($message) use ($updatedHTML) {
+                $message->to($this->contact->email)
+                    ->subject(str_replace('{{name}}', $this->contact->full_name, $this->campaign->subject))
+                    ->from($this->campaign->from_email, $this->campaign->from_name)
+                    ->html($updatedHTML);
+            });
 
-        $updatedHTML = $this->prepare_email_html($html);
-        
-        $updatedHTML = str_replace('{{subject}}', $this->campaign->subject, $updatedHTML);
-      	$updatedHTML = str_replace('%7B%7Bsubject%7D%7D', $this->campaign->subject, $updatedHTML);
+            // Update tracking and contact details
+            if ($this->sentTrack) {
+                $this->sentTrack->total_sent++;
+                $this->sentTrack->save();
+            }
+            $this->contact->attemps++;
+            $this->contact->last_sent = Carbon::now();
+            $this->contact->save();
 
-        $updatedHTML = str_replace('{{name}}', ($this->contact->full_name ? : 'there'), $updatedHTML);
-      	$updatedHTML = str_replace('%7B%7Bsubject%7D%7D', ($this->contact->full_name ? : 'there'), $updatedHTML);
+            sleep(10); // Keeping as per your code
 
-        $updatedHTML = str_replace('{{recommended_packs}}', $this->recommendedPacks($this->contact->email), $updatedHTML);
-        $updatedHTML = str_replace('%7B%7Brecommended_packs%7D%7D', $this->recommendedPacks($this->contact->email), $updatedHTML);
+        } catch (\Exception $exception) {
+            // Log the exception
+            Log::error('Exception occurred in sendCampaignEmail: ' . $exception->getMessage());
 
-        $updatedHTML = str_replace('{{recommended_comps}}', $this->recommendedComps($this->contact->email), $updatedHTML);
-        $updatedHTML = str_replace('%7B%7Brecommended_comps%7D%7D', $this->recommendedComps($this->contact->email), $updatedHTML);
+            // Update the sentTrack failed count
+            if ($this->sentTrack) {
+                $this->sentTrack->failed++;
+                $this->sentTrack->save();
+            }
 
-        $updatedHTML = str_replace('{{unsubscribe}}', $unsubscribeUrl, $updatedHTML);
-        $updatedHTML = str_replace('%7B%7Bunsubscribe%7D%7D', $unsubscribeUrl, $updatedHTML);
-      
-      	
-      
-        Mail::send([], [], function ($message) use ($updatedHTML) {
-            $message->to($this->contact->email)
-                ->subject($this->campaign->subject)
-                ->from($this->campaign->from_email, $this->campaign->from_name)
-                ->html($updatedHTML);
-        });
-
-        
-        if($this->sentTrack){
-            $this->sentTrack->total_sent++;
-            $this->sentTrack->save();
         }
-        $this->contact->attemps++;
-        $this->contact->last_sent = Carbon::now();
-        $this->contact->save();
-      
-      	sleep(10);
-
     }
 
     public function failed(\Exception $exception)
     {
-        if($this->sentTrack){
+        // Log the failed job
+        Log::error('sendCampaignEmail failed: ' . $exception->getMessage());
+
+        // Update the sentTrack failed count
+        if ($this->sentTrack) {
             $this->sentTrack->failed++;
             $this->sentTrack->save();
         }

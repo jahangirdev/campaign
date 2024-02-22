@@ -52,7 +52,11 @@
           <div class="card template {{$template->id == $campaign->template ? 'selected' : ''}}" data-temp="{{$template->id}}">
             <img src="{{asset('')}}{{$template->screenshot ? : 'backend/uploads/template-placeholder.jpg'}}" class="card-img-top" alt="{{$template->name}}">
             <div class="card-body">
-              <h5 class="text-center mb-4">{{$template->name}}</h5>
+              <h5 class="text-center mb-4">{{$template->name}}
+                @if($template->after_quiz == 1)
+                  <span class="badge text-white bg-success font-weight-normal">After Quiz</span>
+                @endif
+              </h5>
             </div>
           </div>
         </div>

@@ -44,15 +44,9 @@
           <form method="POST" action="{{route('contact.update', $contact->id)}}">
             @csrf
             @method('PUT')
-            <div class="row gx-4">
-              <div class="col">
-                <label for="firstName">First Name</label>
-                <input name="first_name" type="text" class="form-control" id="firstName" value="{{ old('first_name') ? : $contact->first_name}}">
-              </div>
-              <div class="col">
-                <label for="lastName">Last Name</label>
-                <input name="last_name" type="text" class="form-control" id="lastName" value="{{ old('last_name') ? : $contact->last_name}}">
-              </div>
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input name="full_name" type="text" class="form-control" id="fullName" value="{{ old('full_name') ? : $contact->full_name}}">
             </div>
             <div class="row gx-4 mt-3">
               <div class="col">

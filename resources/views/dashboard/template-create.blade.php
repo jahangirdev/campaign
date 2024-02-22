@@ -130,8 +130,12 @@
                   <td>Add to Cart url for recommended packs (Quiz takers only)</td>
                 </tr>
                 <tr>
+                  <td><input type="text" class="form-control variable" value="@{{cart_url}}%26apply_coupon=REPLACE_COUPON_CODE" readonly></td>
+                  <td>Add to Cart url with coupon code for recommended packs (Quiz takers only)</td>
+                </tr>
+                <tr>
                   <td><input type="text" class="form-control variable" value="@{{subject}}" readonly></td>
-                  <td>Campaign Subject (Can be used between <code>&lt;title&gt;</code> and <code>&lt;/title&gt;</code>)</td>
+                  <td>Campaign Subject (Can be used between <code>&lt;title&gt;</code> and <code>&lt;/title&gt;</code> or in other place)</td>
                 </tr>
                 <tr>
                   <td><input type="text" class="form-control variable" value="@{{unsubscribe}}" readonly></td>

@@ -227,7 +227,20 @@ class CampaignController extends Controller
 
      public function update( Request $request, $id){
         $validator = Validator::make($request->all(), [
-            'schedule' => 'nullable|date_format:Y-m-d\TH:i|after_or_equal:'.Carbon::now()->utc(),
+            'schedule' => [
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('run_at') !== 'instant') {
+                        // Add the schedule validation only if run_at is not "instant"
+                        $validator = Validator::make($request->all(), [
+                            'schedule' => 'nullable|date_format:Y-m-d\TH:i|after_or_equal:' . Carbon::now()->utc(),
+                        ]);
+        
+                        if ($validator->fails()) {
+                            $fail($validator->errors()->first('schedule'));
+                        }
+                    }
+                },
+            ],
             'run_at' => 'required|string',
             'status' => 'required|string',
         ]);

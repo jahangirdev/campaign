@@ -10,7 +10,11 @@ class ListController extends Controller
 {
     public function index() {
         $lists =Lists::orderBy("created_at","desc")->paginate(10);
-        return view("dashboard.list-index", compact("lists"));
+
+        $numOfList = function ($list_id) {
+            return Contacts::where('list_id', $list_id)->count();
+        };
+        return view("dashboard.list-index", compact("lists", "numOfList"));
     }
     public function create(){
         return view("dashboard.list-create");

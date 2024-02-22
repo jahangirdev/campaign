@@ -43,15 +43,9 @@
         <div class="card-body">
           <form method="POST" action="{{route('contact.store')}}">
             @csrf
-            <div class="row gx-4">
-              <div class="col">
-                <label for="firstName">First Name</label>
-                <input name="first_name" type="text" class="form-control" id="firstName">
-              </div>
-              <div class="col">
-                <label for="lastName">Last Name</label>
-                <input name="last_name" type="text" class="form-control" id="lastName">
-              </div>
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input name="full_name" type="text" class="form-control" id="fullName">
             </div>
             <div class="row gx-4 mt-3">
               <div class="col">
@@ -99,11 +93,11 @@
           <h3>CSV Import</h3>
         </div>
         <div class="card-body">
-          <form method="POST" action="{{route('contact.import')}}">
+          <form method="POST" action="{{route('contact.csv.import')}}" enctype="multipart/form-data">
             @csrf
             <div class="form-group">
               <label for="country">Assign to List</label>
-              <select class="form-control" name="list_id" id="country">
+              <select class="form-control" name="list_id" id="list-id">
                 @foreach($lists as $list)
                   <option value="{{$list->id}}">{{$list->name}}</option>
                 @endforeach
@@ -113,33 +107,10 @@
               <label for="address">Select CSV file</label>
               <input type="file" name="csv_file" class="form-control-file" id="address" placeholder="Upload CSV" accept=".csv">
             </div>
-            <button type="submit" class="btn btn-primary">Check and Import</button>
+            <button type="submit" class="btn btn-primary">Import</button>
           </form>
         </div>
       </div>
-      @if(isset($alreadyExists) || isset($invalidEmails))
-      <h2 class="mt-5">{{$alreadyExists}} already exists. {{count($invalidEmails)}} has issues</h2>
-      @endif
-      @if(isset($invalidEmails) && count($invalidEmails) > 0)
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($invalidEmails as $email)
-            <tr>
-              <td>{{$email['email']}}</td>
-              <td>{{$email['status'] ? 'Valid' : 'Invalid'}}</td>
-              <td>{{$email['message']}}</td>
-            </tr>
-          @endforeach
-        </tbody>
-      </table>
-      @endif
 
       <!-- CSV import -->
 

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use App\Models\Templates;
+use App\Models\Contacts;
 class TemplateController extends Controller
 {
     public function index(){
@@ -111,5 +112,101 @@ class TemplateController extends Controller
         else{
             return redirect()->route('template.index')->with('notice', ['type' => 'danger','message'=> 'Failed to set the tempalte as After Quiz.']);
         }
+    }
+    
+    public function get_after_quiz_template(Request $request){
+        if(empty($request->email)){
+            $data = ['name' => '', 'code' => ''];
+            return response()->json($data);
+        }
+        $contact = Contacts::where('email', $request->email)->first();
+        $after_quiz = Templates::where('after_quiz', 1)->first();
+        if($after_quiz && $contact){
+            $unsubscribeUrl = route('afterquiz.unsubscribe');
+            $html = $after_quiz->code;
+            // Replace variables in the HTML
+            $html = str_replace('{{cart_url}}', $this->recommendedCartLink($request->email), $html);
+            $html = str_replace('%7B%7Bcart_url%7D%7D', $this->recommendedCartLink($request->email), $html);
+
+            
+            $html = str_replace('{{subject}}', $after_quiz->name, $html);
+            $html = str_replace('%7B%7Bsubject%7D%7D', $after_quiz->name, $html);
+            $html = str_replace('{{name}}', ($contact->full_name ?? 'there'), $html);
+            $html = str_replace('%7B%7Bname%7D%7D', ($request->full_name ?? 'there'), $html);
+            $html = str_replace('{{recommended_packs}}', $this->recommendedPacks($request->email), $html);
+            $html = str_replace('%7B%7Brecommended_packs%7D%7D', $this->recommendedPacks($request->email), $html);
+            $html = str_replace('{{recommended_comps}}', $this->recommendedComps($request->email), $html);
+            $html = str_replace('%7B%7Brecommended_comps%7D%7D', $this->recommendedComps($request->email), $html);
+            $html = str_replace('{{unsubscribe}}', $unsubscribeUrl, $html);
+            $html = str_replace('%7B%7Bunsubscribe%7D%7D', $unsubscribeUrl, $html);
+            return ['name' => str_replace('{{name}}', $contact->full_name, $after_quiz->name), 'code' => $html];
+        }
+        else{
+            $data = ['name' => '', 'code' => ''];
+            return response()->json($data);
+        }
+    }
+
+    public function recommendedPacks($email){
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://healthbox.store/wp-json/healthbox-quiz/v1/packs/',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array('email' => $email),
+        ));
+
+        $response = json_decode(curl_exec($curl));
+
+        curl_close($curl);
+        return implode(', ', $response->products);
+    }
+
+    public function recommendedComps($email){
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://healthbox.store/wp-json/healthbox-quiz/v1/comps/',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array('email' => $email),
+        ));
+
+        $response = json_decode(curl_exec($curl));
+
+        curl_close($curl);
+        return implode(', ', $response->products);
+    }
+
+    public function recommendedCartLink($email){
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://healthbox.store/wp-json/healthbox-quiz/v1/cart-url/',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array('email' => $email),
+        ));
+
+        $response = json_decode(curl_exec($curl));
+
+        curl_close($curl);
+        return $response->cart_url;
     }
 }

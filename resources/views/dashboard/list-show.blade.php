@@ -67,14 +67,13 @@
   <tbody>
     @foreach($contacts as $key => $contact)
     <tr>
-      <td>{{($key+1)*$contacts->currentPage()}}</td>
+      <td>{{($key+1)+($contacts->currentPage()-1)*$contacts->perPage()}}</td>
       <td>{{$contact->full_name}}</td>
       <td>{{$contact->email}}</td>
       <td>{{$contact->phone}}</td>
       <td>{{ucwords($contact->country)}}</td>
       <td><span class="{{$contact->status != 'subscribed' ? 'un' : '' }}subscribed">{{ucwords($contact->status)}}</span></td>
       <td>
-        <a class="btn btn-info" href="{{route('contact.show', $contact->id)}}">View</a>
         <a class="btn btn-warning" href="{{route('contact.edit', $contact->id)}}">Edit</a>
         <form id="delete-frm-{{ $key }}" action="{{route('contact.destroy', $contact->id)}}" method="post" style="display:none">
           @csrf

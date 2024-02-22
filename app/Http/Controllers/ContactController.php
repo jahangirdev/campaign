@@ -6,6 +6,8 @@ use App\Models\Contacts;
 use App\Models\Lists;
 use Illuminate\Http\Request;
 use Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\CSVContactImport;
 
 class ContactController extends Controller
 {
@@ -32,8 +34,7 @@ class ContactController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            "first_name"=> "nullable|string|max:100",
-            "last_name"=> "nullable|string|max:100",
+            "full_name"=> "nullable|string|max:255",
             "email"=> "required|email|unique:contacts",
             "phone" => 'nullable|regex:/^\+?[0-9]{10,14}$/',
             'country' => 'nullable|string',
@@ -45,7 +46,6 @@ class ContactController extends Controller
             return redirect()->back()->with('notice', ['type' => 'danger','message'=> $checkEmail['message']]);
         }
         $contact = new Contacts();
-        $contact->full_name = trim($request->input('first_name') . ' ' . $request->input('last_name'));
         $contact->fill($request->all());
         if($contact->save()){
             return redirect()->route('contact.create')->with('notice', ['type' => 'success', 'message'=> 'Contact added successfully!']);
@@ -79,8 +79,7 @@ class ContactController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            "first_name"=> "nullable|string|max:100",
-            "last_name"=> "nullable|string|max:100",
+            "full_name"=> "nullable|string|max:255",
             "email"=> "required|email|unique:contacts,id",
             "phone" => 'nullable|regex:/^\+?[0-9]{10,14}$/',
             'country' => 'nullable|string',
@@ -92,10 +91,10 @@ class ContactController extends Controller
         $contact->full_name = trim($request->input('first_name') . ' ' . $request->input('last_name'));
         $contact->fill($request->all());
         if($contact->save()){
-            return redirect()->route('contact.create')->with('notice', ['type' => 'success', 'message'=> 'Contact updated successfully!']);
+            return redirect()->back()->with('notice', ['type' => 'success', 'message'=> 'Contact updated successfully!']);
         }
         else{
-            return redirect()->route('contact.create')->with('notice', ['type' => 'error', 'message' => 'Something went wrong with updating contact!']);
+            return redirect()->back()->with('notice', ['type' => 'error', 'message' => 'Something went wrong with updating contact!']);
         }
     }
 
@@ -172,8 +171,18 @@ class ContactController extends Controller
         return view('dashboard.contact-create', compact('invalidEmails', 'lists', 'alreadyExists'));
     }
 
-    public function csv_import(){
-        return view("dashboard.email-validator");
+    public function csv_import(Request $request){
+        $request->validate([
+            'list_id' => 'required|integer',
+            'csv_file' => 'required|file|mimes:csv,txt'
+        ]);
+
+        $file = $request->file('csv_file');
+        $list_id = $request->list_id;
+
+        Excel::import(new CSVContactImport($list_id), $file);
+
+        return redirect()->back()->with('notice', ['type' => 'success', 'message' => 'Contacts imported successfully!']);
     }
 
     public function unsubscribe(Request $request){
@@ -213,6 +222,23 @@ class ContactController extends Controller
         $contact->list_id = $list_id->id;
         if($contact->save()){
             return response()->json(['type' => 'success', 'message' => 'Contact added successfully.']);
+        }
+    }
+    public function afterquiz_unsubscribe(){
+        return view('afterquiz-unsubscribe');
+    }
+    public function afterquiz_unsubscribe_submit(Request $request){
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+        $contact = Contacts::where('email', $request->email)->first();
+        if($contact){
+            $contact->status = 'unsubscribed';
+            $contact->save();
+            return '<h2 style="text-align:center;color:green">Unsubscribed successfully!</h2>';
+        }
+        else{
+            return redirect()->back()->withErrors(["Email didn't match."]);
         }
     }
 }

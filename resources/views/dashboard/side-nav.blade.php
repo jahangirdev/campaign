@@ -21,7 +21,7 @@ $currentRoute = Route::currentRouteName();
       </div>
 
       <!-- SidebarSearch Form -->
-      <div class="form-inline">
+      {{-- <div class="form-inline">
         <div class="input-group" data-widget="sidebar-search">
           <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
           <div class="input-group-append">
@@ -31,6 +31,7 @@ $currentRoute = Route::currentRouteName();
           </div>
         </div>
       </div>
+      --}}
 
       <!-- Sidebar Menu -->
       <nav class="mt-2">
@@ -49,7 +50,7 @@ $currentRoute = Route::currentRouteName();
               <li class="nav-item">
                 <a href="{{route('list.index')}}" class="nav-link {{ $currentRoute == 'list.index' ? 'active' : '' }}">  
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Lists</p>
+                  <p>All List</p>
                 </a>
               </li>
               <li class="nav-item">

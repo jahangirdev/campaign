@@ -70,7 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::post('templates/{id}/update', [TemplateController::class,'update'])->name('template.update');
     Route::get('templates/{id}/preview', [TemplateController::class, 'preview'])->name('template.preview');
     Route::delete('templates/{id}/', [TemplateController::class, 'destroy'])->name('template.destroy');
-    Route::get('template/{id}/quiz', [TemplateController::class, 'after_quiz'])->name('template.quiz');
+    Route::get('templates/{id}/quiz', [TemplateController::class, 'after_quiz'])->name('template.quiz');
 
 
     //campaign
@@ -103,6 +103,8 @@ Route::get('/opens', [TrackingController::class,'track_opens'])->name('track.ope
 Route::get('/clicks', [TrackingController::class,'track_clicks'])->name('track.clicks');
 Route::get('/unsubscribe', [TrackingController::class, 'unsubscribe_form'])->name('track.unsubscribe');
 Route::post('/unsubscribe', [TrackingController::class, 'unsubscribe'])->name('track.unsubscribe.submit');
+Route::get('/afterquiz/unsubscribe', [ContactController::class, 'afterquiz_unsubscribe'])->name('afterquiz.unsubscribe');
+Route::post('/afterquiz/unsubscribe', [ContactController::class, 'afterquiz_unsubscribe_submit'])->name('afterquiz.unsubscribe.submit');
 
 
 require __DIR__.'/auth.php';

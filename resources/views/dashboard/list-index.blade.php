@@ -50,7 +50,7 @@
     <tr>
       <td>{{$key+1}}</td>
       <td>{{$list->name}}</td>
-      <td>2000</td>
+      <td>{{$numOfList($list->id)}}</td>
       <td>
         <a class="btn btn-info" href="{{route('list.view', $list->id)}}">View</a>
         <a class="btn btn-warning" href="{{route('list.edit', $list->id)}}">Edit</a>
@@ -60,7 +60,7 @@
           @method('DELETE')
         </form>
         <button class="btn btn-danger" type="submit" form="delete-frm-{{ $key }}" onclick="confirm('Are you sure to delete this list?');">Delete</button>
-        @if($list->quiz_taker == 1)<span class="ml-2"><i class="fa fa-check"></i> Quiz Takers</span>@endif
+        @if($list->quiz_taker == 1)<span class="ml-2"><i class="fa fa-check"></i> Quiz List</span>@endif
       </td>
     </tr>
     @endforeach
