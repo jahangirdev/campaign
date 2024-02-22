@@ -46,6 +46,19 @@ class ListController extends Controller
     }
     public function destroy($id) {
         Lists::find($id)->delete();
-        return redirect()->route("list.index")->with("success","List deleted successfully");
+        return redirect()->route("list.index")->with('notice', ['type' => "success", 'message' => "List deleted successfully"]);
+    }
+
+    public function quiz_taker($id){
+        $quiz_taker = Lists::where('quiz_taker', 1)->first();
+        $list = Lists::find($id);
+        $list->quiz_taker = 1;
+        if($list->save()){
+            if($quiz_taker){
+                $quiz_taker->quiz_taker = 0;
+                $quiz_taker->save();
+            }
+            return redirect()->route("list.index")->with("notice",['type' => 'success', 'message' =>"Successfully set as Quiz Takers"]);
+        }
     }
 }

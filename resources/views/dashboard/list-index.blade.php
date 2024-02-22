@@ -54,11 +54,13 @@
       <td>
         <a class="btn btn-info" href="{{route('list.view', $list->id)}}">View</a>
         <a class="btn btn-warning" href="{{route('list.edit', $list->id)}}">Edit</a>
+        @if($list->quiz_taker != 1)<a class="btn btn-success" href="{{route('list.quiz', $list->id)}}">Set as Quiz List</a>@endif
         <form id="delete-frm-{{ $key }}" action="{{route('list.delete', $list->id)}}" method="post" style="display:none">
           @csrf
           @method('DELETE')
         </form>
         <button class="btn btn-danger" type="submit" form="delete-frm-{{ $key }}" onclick="confirm('Are you sure to delete this list?');">Delete</button>
+        @if($list->quiz_taker == 1)<span class="ml-2"><i class="fa fa-check"></i> Quiz Takers</span>@endif
       </td>
     </tr>
     @endforeach

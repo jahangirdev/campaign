@@ -86,10 +86,7 @@ class CampaignController extends Controller
         }
 
         $validator = Validator::make( $request->all(), [
-            'type' => 'required|string',
             'schedule' => 'nullable|string',
-            'repeat'=> 'nullable|string',
-            'stop_at' => 'nullable|string',
             'run_at' => 'required|string',
             'status' => 'required|string',
         ] );
@@ -103,11 +100,10 @@ class CampaignController extends Controller
         $campaign->fill($request->all());
         $campaign->lists = trim($request->lists, '"');
         $campaign->schedule = !empty($request->schedule) ? Carbon::parse($request->schedule)->utc() : Carbon::now();
-        $campaign->stop_at = !empty($request->stop_at) ? Carbon::parse($request->stop_at)->utc() : null;
 
         if( $campaign->save() ){
             
-            if( $request->run_at == 'instant'){
+            if( $request->run_at == 'instant' && $request->status == 'publish'){
                 createCampaignEmailQueue::dispatch($campaign->id);
             }
 
@@ -231,10 +227,7 @@ class CampaignController extends Controller
 
      public function update( Request $request, $id){
         $validator = Validator::make($request->all(), [
-            'type' => 'required|string',
             'schedule' => 'nullable|date_format:Y-m-d\TH:i|after_or_equal:'.Carbon::now()->utc(),
-            'repeat'=> 'nullable|string',
-            'stop_at' => 'nullable|date_format:Y-m-d\TH:i|after:schedule',
             'run_at' => 'required|string',
             'status' => 'required|string',
         ]);
@@ -245,10 +238,7 @@ class CampaignController extends Controller
 
         $campaign = Campaigns::find($id);
 
-        $campaign->type = $request->type;
         $campaign->schedule = Carbon::parse($request->schedule);
-        $campaign->repeat = $request->repeat;
-        $campaign->stop_at = Carbon::parse($request->stop_at);
         $campaign->run_at = $request->run_at;
         $campaign->status = $request->status;
 
@@ -275,30 +265,13 @@ class CampaignController extends Controller
      public function trash($id){
         $campaign = Campaigns::find($id);
         if($campaign && $campaign->status != 'running'){
-            $campaign->status = 'trash';
-            $campaign->save();
-            return redirect()->back()->with('notice', ['type' => 'warning','message'=> 'Campaign moved to trash']);
+            $campaign->delete();
+            EmailSentTrackings::where('campaign_id', $campaign->id)->delete();
+            Trackings::where('campaign_id', $campaign->id)->delete();
+            return redirect()->back()->with('notice', ['type' => 'warning','message'=> 'Campaign deleted successfully.']);
         }
         else{
-            return redirect()->back()->with('notice', ['type' => 'danger','message'=> 'Running campaign cannot be moved to trash']);
-        }
-    }
-
-    public function trash_index(){
-        $campaigns = Campaigns::where('status','trash')->with('trackings')->paginate(10);
-
-        return view('dashboard.campaign-trash', compact('campaigns'));
-    }
-
-    public function restore($id){
-        $campaign = Campaigns::find($id);
-        if($campaign && $campaign->status == 'trash'){
-            $campaign->status = 'draft';
-            $campaign->save();
-            return redirect()->back()->with('notice', ['type' => 'success','message'=> 'Campaign restored from trash']);
-        }
-        else{
-            return redirect()->back()->with('notice', ['type' => 'danger','message'=> 'The selected campaign wasn\'t found in trash.']);
+            return redirect()->back()->with('notice', ['type' => 'danger','message'=> 'Running campaign cannot be deleted.']);
         }
     }
 }

@@ -16,12 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->integer('template');
             $table->text('lists');
-            $table->string('type')->default('once');
             $table->dateTime('schedule')->default(now());
-            $table->string('repeat')->default('none');
             $table->dateTime('last_run')->nullable();
             $table->string('run_at');
-            $table->dateTime('stop_at')->nullable();
             $table->integer('total_runs')->default(0);
             $table->string('batch_id')->nullable();
             $table->string('subject');

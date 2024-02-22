@@ -191,4 +191,28 @@ class ContactController extends Controller
 
         return view('unsubscribe', compact('params'));
     }
+
+    public function subscribe(Request $request){
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'nullable|string',
+            'last_name' => 'nullable|string',
+            'full_name' => 'nullable|string',
+            'email' => 'required|email',
+            'phone' => 'nullable|string',
+            'country' => 'nullable|string',
+            'address' => 'nullable|string'
+        ]);
+
+        if($validator->fails()){
+            return response()->json(['type' => 'error', 'message' => $validator->messages()]);
+        }
+        
+        $contact = new Contacts();
+        $contact->fill($request->all());
+        $list_id = Lists::where('quiz_taker', 1)->first();
+        $contact->list_id = $list_id->id;
+        if($contact->save()){
+            return response()->json(['type' => 'success', 'message' => 'Contact added successfully.']);
+        }
+    }
 }

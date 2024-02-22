@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/list/{id}/edit', [ListController::class,'edit'])->name('list.edit');
     Route::put('/list/{id}', [ListController::class,'update'])->name('list.update');
     Route::delete('/list/{id}', [ListController::class,'destroy'])->name('list.delete');
+    Route::get('/list/{id}/quiz', [ListController::class, 'quiz_taker'])->name('list.quiz');
 
 
     //contacts
@@ -69,6 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::post('templates/{id}/update', [TemplateController::class,'update'])->name('template.update');
     Route::get('templates/{id}/preview', [TemplateController::class, 'preview'])->name('template.preview');
     Route::delete('templates/{id}/', [TemplateController::class, 'destroy'])->name('template.destroy');
+    Route::get('template/{id}/quiz', [TemplateController::class, 'after_quiz'])->name('template.quiz');
 
 
     //campaign

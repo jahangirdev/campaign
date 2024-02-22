@@ -51,8 +51,7 @@
             'draft' => 'warning',
             'failed' => 'danger',
             'scheduled' => 'primary',
-            'finished' => 'secondary',
-            'completed' => 'info',
+            'completed' => 'secondary',
             'cancelled' => 'dark',
             'stopped' => 'warning'
           ];
@@ -72,18 +71,17 @@
                       </a>
                     </div>
                     <div class="col-md-6 text-right">
-                      @if($campaign->type == 'repeat') <span><i class="fas fa-sync-alt"></i></span>@endif
-                      <span class="ml-1" style="font-size:20px">{{$campaign->total_runs}}</span>
+                      <span class="ml-1" style="font-size:20px">Runned: {{$campaign->total_runs}}</span>
                     </div>
                   </div>
                   <div>
                     <span class="badge text-white bg-{{$statusColor[$status]}}">{{ucwords($status)}}</span>
-                    <span class="text-muted ml-4">{{$status == 'scheduled' ? "Will run at $campaign->schedule (UTC)": ""}}{{$status == 'completed' ? "Next Schedule ".$nextSchedule($campaign)." (UTC)": ''}}</span>
+                    <span class="text-muted ml-4">{{$status == 'scheduled' ? "Will run at $campaign->schedule (UTC)": ""}}</span>
                   </div>
                   <div class="row mt-4">
                     <div class="col">
-                      Sent: {{$campaign->sentTrackings()->sum('total_sent')}} | Invalid: {{$campaign->sentTrackings()->sum('invalid')}} | Failed: {{$campaign->sentTrackings()->sum('failed')}}
-                      <small class="text-muted"><br>Sent Trackings</small>
+                      {{$campaign->sentTrackings()->sum('total_sent')}}
+                      <small class="text-muted"><br>Sent</small>
                     </div>
                     <div class="col">
                       {{$campaign->trackings()->sum('opens')}}
@@ -108,7 +106,7 @@
                       <button type="submit" form="campaign-form-{{$campaign->id}}" class="btn btn-sm btn-danger"><i class="far fa-stop-circle"></i> Stop</button>
                     @endif
                     @if($status != 'running')<a href="{{route('campaign.edit', $campaign->id)}}" class="btn btn-sm btn-success"><i class="fas fa-edit"></i> Edit</a>@endif
-                    @if($status == 'finished' || $status == 'cancelled' || $status = 'failed')<a href="{{route('campaign.trash', $campaign->id)}}" class="btn btn-sm btn-warning"><i class="fas fa-trash"></i> Trash</a>@endif
+                    @if($status == 'completed' || $status == 'cancelled' || $status == 'failed')<a href="{{route('campaign.trash', $campaign->id)}}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Delete</a>@endif
                   </div>
                 </div>
               </div>

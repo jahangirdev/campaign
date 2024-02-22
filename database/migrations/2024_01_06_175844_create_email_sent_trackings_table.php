@@ -16,7 +16,6 @@ return new class extends Migration
             $table->integer('campaign_id');
             $table->string('batch_id');
             $table->integer('total_sent')->unsigned()->default(0);
-            $table->integer('invalid')->unsigned()->default(0);
             $table->integer('failed')->unsigned()->default(0);
             $table->timestamps();
         });

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('lists', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->integer('quiz_taker')->default(0);
             $table->timestamps();
         });
     }

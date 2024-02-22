@@ -97,4 +97,19 @@ class TemplateController extends Controller
         }
 
     }
+    public function after_quiz($id){
+        $after_quiz = Templates::where('after_quiz', 1)->first();
+        $template = Templates::find($id);
+        $template->after_quiz = 1;
+        if($template->save()){
+            if($after_quiz){
+                $after_quiz->after_quiz = 0;
+                $after_quiz->save();
+            }
+            return redirect()->route('template.index')->with('notice', ['type' => 'success','message'=> 'Successfully set the template as After Quiz.']);
+        }
+        else{
+            return redirect()->route('template.index')->with('notice', ['type' => 'danger','message'=> 'Failed to set the tempalte as After Quiz.']);
+        }
+    }
 }

@@ -39,7 +39,6 @@ class TrackingController extends Controller
         $contact = Contacts::find($request->query('coid'));
         if($contact){
             $contact->opens++;
-            $contact->point += 10;
             $contact->save();
         }
 
@@ -77,7 +76,6 @@ class TrackingController extends Controller
         $contact = Contacts::find($request->query('coid'));
         if($contact){
             $contact->clicks++;
-            $contact->point += 100;
             $contact->save();
         }
 

@@ -63,22 +63,6 @@
               <label for="campaignSchedule">Schedule</label>
               <input name="schedule" type="datetime-local" class="form-control" id="campaignSchedule">
             </div>
-            <div class="form-group mt-3" style="display:none">
-              <label for="contactList">Repeat</label>
-              <select class="form-control" name="repeat" id="contactList">
-                  <option value="everyday">Everyday</option>
-                  <option value="everyweek">Every Week</option>
-                  <option value="every15days">Every 15 days</option>
-                  <option value="everymonth">Every Month</option>
-                  <option value="everymonth">Every 3 Months</option>
-                  <option value="everymonth">Every 6 Months</option>
-                  <option value="everyyear">Every Year</option>
-              </select>
-            </div>
-            <div class="form-group mt-3" style="display:none">
-              <label for="campaignStopAt">Stop At</label>
-              <input name="stop_at" type="datetime-local" class="form-control" id="campaignStopAt">
-            </div>
             <div class="form-group mt-3">
               <label for="contactList">Status</label>
               <select class="form-control" name="status" id="contactList">

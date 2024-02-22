@@ -54,15 +54,9 @@ class createCampaignEmailQueue implements ShouldQueue
         }
 
         $campaign = $this->campaign;
-        $carbon = new Carbon();
-        $nextRun = $this->nextRun($campaign->repeat);
-        $batch = Bus::batch($jobs)->finally( function(Batch $batch) use ( $campaign, $carbon, $nextRun) {
-            if($campaign->type == "repeat" && $nextRun  <= $carbon->parse($campaign->stop_at)) {
-                $campaign->status = "completed";
-            }
-            else{
-                $campaign->status = 'finished';
-            }
+        $batch = Bus::batch($jobs)->finally( function(Batch $batch) use ( $campaign) {
+            
+            $campaign->status = "completed";
             $campaign->total_runs++;
             $campaign->save();
 
@@ -88,40 +82,8 @@ class createCampaignEmailQueue implements ShouldQueue
         Mail::raw("Failed to create email queues for {$this->campaign->name}", function ($message){
             $message->to("designermja@gmail.com")
             ->subject("Campaign failed!")
-            ->from("hello@prowebsol.com", "ProWebSol Marketing");
+            ->from("hello@healthbox.store", "HealthBox Campaign");
         });
         
-    }
-
-    public function nextRun($repeat)
-    {
-        switch ($repeat) {
-            case 'every5minutes':
-                return Carbon::now()->addMinutes(5);
-            case 'everyday':
-                return Carbon::now()->addDay();
-    
-            case 'everyweek':
-                return Carbon::now()->addWeek();
-    
-            case 'every15days':
-                return Carbon::now()->addDays(15);
-    
-            case 'everymonth':
-                return Carbon::now()->addMonth();
-    
-            case 'every3months':
-                return Carbon::now()->addMonths(3);
-    
-            case 'every6months':
-                return Carbon::now()->addMonths(6);
-    
-            case 'everyyear':
-                return Carbon::now()->addYear();
-    
-            default:
-                // If not recognized, default to subtracting one year
-                return Carbon::now()->subYears(10);
-        }
     }
 }

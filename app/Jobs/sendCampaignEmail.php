@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\Templates;
 use App\Models\EmailSentTrackings;
-use App\Models\TrashContacts;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,34 +35,39 @@ class sendCampaignEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        $verify = $this->smtpVerify($this->contact->email);
-        if($this->contact->validity === null && $verify['type']  == 'invalid'){
-            $this->contact->validity = "invalid";
-            $this->contact->reason = $verify['message'];
-            TrashContacts::create($this->contact->toArray());
-                $this->contact->delete();
-                if($this->sentTrack){
-                    $this->sentTrack->invalid++;
-                }
-                return;
-        }
         $unsubscribeUrl = route('track.unsubscribe', ['caid' => $this->campaign->id, 'coid' => $this->contact->id, 'batch' => $this->batchId]);
 
 
         $html = Templates::find($this->campaign->template)->code;
 
+        //replace {{cart_url}} variable with cart link
+
+        $html = str_replace('{{cart_url}}', $this->recommendedCartLink($this->contact->email), $html);
+        $html = str_replace('%7B%7Bcart_url%7D%7D', $this->recommendedCartLink($this->contact->email), $html);
+
         $updatedHTML = $this->prepare_email_html($html);
+        
+        $updatedHTML = str_replace('{{subject}}', $this->campaign->subject, $updatedHTML);
+      	$updatedHTML = str_replace('%7B%7Bsubject%7D%7D', $this->campaign->subject, $updatedHTML);
+
+        $updatedHTML = str_replace('{{name}}', ($this->contact->full_name ? : 'there'), $updatedHTML);
+      	$updatedHTML = str_replace('%7B%7Bsubject%7D%7D', ($this->contact->full_name ? : 'there'), $updatedHTML);
+
+        $updatedHTML = str_replace('{{recommended_packs}}', $this->recommendedPacks($this->contact->email), $updatedHTML);
+        $updatedHTML = str_replace('%7B%7Brecommended_packs%7D%7D', $this->recommendedPacks($this->contact->email), $updatedHTML);
+
+        $updatedHTML = str_replace('{{recommended_comps}}', $this->recommendedComps($this->contact->email), $updatedHTML);
+        $updatedHTML = str_replace('%7B%7Brecommended_comps%7D%7D', $this->recommendedComps($this->contact->email), $updatedHTML);
+
         $updatedHTML = str_replace('{{unsubscribe}}', $unsubscribeUrl, $updatedHTML);
         $updatedHTML = str_replace('%7B%7Bunsubscribe%7D%7D', $unsubscribeUrl, $updatedHTML);
       
-      	$updatedHTML = str_replace('{{subject}}', $this->campaign->subject, $updatedHTML);
-      	$updatedHTML = str_replace('%7B%7Bsubject%7D%7D', $this->campaign->subject, $updatedHTML);
+      	
       
         Mail::send([], [], function ($message) use ($updatedHTML) {
             $message->to($this->contact->email)
                 ->subject($this->campaign->subject)
                 ->from($this->campaign->from_email, $this->campaign->from_name)
-                ->replyTo('sales@prowebsol.com')
                 ->html($updatedHTML);
         });
 
@@ -73,8 +77,6 @@ class sendCampaignEmail implements ShouldQueue
             $this->sentTrack->save();
         }
         $this->contact->attemps++;
-        $this->contact->point--;
-        $this->contact->validity = 'valid';
         $this->contact->last_sent = Carbon::now();
         $this->contact->save();
       
@@ -132,68 +134,67 @@ class sendCampaignEmail implements ShouldQueue
         return $updatedHtml;
     }
 
-    public function getMXRecords($domain) {
-        $mxRecords = [];
-        $dnsRecords = dns_get_record($domain, DNS_MX);
+    public function recommendedPacks($email){
+        $curl = curl_init();
 
-        foreach ($dnsRecords as $record) {
-            $mxRecords[] = $record['target'];
-        }
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://healthbox.store/wp-json/healthbox-quiz/v1/packs/',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array('email' => $email),
+        ));
 
-        return $mxRecords;
+        $response = json_decode(curl_exec($curl));
+
+        curl_close($curl);
+        return implode(', ', $response->products);
     }
 
-    public function smtpVerify($toEmail, $fromEmail = 'contact@jahangirdev.com') {
-        // Extract the domain from the recipient email
-        $domain = explode('@', $toEmail)[1];
+    public function recommendedComps($email){
+        $curl = curl_init();
 
-        // Get the mail server's MX records
-        $mxRecords = $this->getMXRecords($domain);
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://healthbox.store/wp-json/healthbox-quiz/v1/comps/',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array('email' => $email),
+        ));
 
-        if (empty($mxRecords)) {
-            return "Invalid: MX records not found for $domain";
-        }
+        $response = json_decode(curl_exec($curl));
 
-        $errorMessage = "Invalid: Unable to verify with any MX record for $domain";
+        curl_close($curl);
+        return implode(', ', $response->products);
+    }
 
-        // Iterate through MX records and try each one
-        foreach ($mxRecords as $mxRecord) {
-            // Open a connection to the current mail server
-            $smtpConnection = stream_socket_client("tcp://$mxRecord:25", $errno, $errstr, 30);
+    public function recommendedCartLink($email){
+        $curl = curl_init();
 
-            if (!$smtpConnection) {
-                $errorMessage .= "\nFailed to connect to $mxRecord: $errstr ($errno)";
-                continue; // Try the next MX record
-            }
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => 'https://healthbox.store/wp-json/healthbox-quiz/v1/cart-url/',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array('email' => $email),
+        ));
 
-            // Read the welcome message from the server
-            fread($smtpConnection, 1024);
+        $response = json_decode(curl_exec($curl));
 
-            // Send HELO command
-            fwrite($smtpConnection, "HELO example.com\r\n");
-            fread($smtpConnection, 1024);
-
-            // Send MAIL FROM command
-            fwrite($smtpConnection, "MAIL FROM:<$fromEmail>\r\n");
-            fread($smtpConnection, 1024);
-
-            // Send RCPT TO command
-            fwrite($smtpConnection, "RCPT TO:<$toEmail>\r\n");
-            $response = fread($smtpConnection, 1024);
-
-            // Close the connection
-            fwrite($smtpConnection, "QUIT\r\n");
-            fclose($smtpConnection);
-
-            // Check the response and return result if valid
-            if (strpos($response, '250') !== false) {
-                return ['type' => 'valid'];
-            } else {
-                $errorMessage .= "\nAttempted $mxRecord: $response";
-            }
-        }
-
-        return ['type' => 'invalid', 'message' => $errorMessage];
+        curl_close($curl);
+        return $response->cart_url;
     }
 
 }

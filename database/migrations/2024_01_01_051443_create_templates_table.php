@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('screenshot')->nullable();
             $table->longText('code');
             $table->string('status')->default('draft');
+            $table->integer('after_quiz')->default(0);
             $table->timestamps();
         });
     }

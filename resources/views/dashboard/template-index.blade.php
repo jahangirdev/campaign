@@ -43,9 +43,16 @@
           <div class="card">
             <img src="{{asset('')}}{{$template->screenshot ? : 'backend/uploads/template-placeholder.jpg'}}" class="card-img-top img-fluid" alt="{{$template->name}}">
             <div class="card-body">
-              <h5 class="text-center mb-4">{{$template->name}}</h5>
+              <h5 class="text-center mb-4">{{$template->name}}
+              @if($template->after_quiz == 1)
+                (After Quiz)
+              @endif
+              </h5>
               <div class="d-flex justify-content-between mt-4">
                 <a href="{{route('template.preview', $template->id)}}" class="btn btn-primary"><i class="fa fa-eye"></i></a>
+                @if($template->after_quiz != 1)
+                  <a href="{{route('template.quiz', $template->id)}}" class="btn btn-primary">Set as After Quiz</a>
+                @endif
                 <a href="{{route('template.edit', $template->id)}}" class="btn btn-success"><i class="fa fa-edit"></i></a>
                 <form style="display:none" id="delete-temp-{{$key}}" action="{{route('template.destroy', $template->id)}}" method="post">
                   @csrf
